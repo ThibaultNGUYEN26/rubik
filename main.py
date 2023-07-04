@@ -1,5 +1,6 @@
 import numpy as np
 from moves import *
+import sys
 
 # Define the colors for each face of the Rubik's Cube
 colors = {
@@ -52,6 +53,7 @@ W W W O O O G G G R R R B B B Y Y Y
 51 52 53 Y Y Y 5
 """
 
+
 cube = np.array([[0, 0, 0], [0, 0, 1], [0, 0, 2],
                  [0, 1, 0], [0, 1, 1], [0, 1, 2],
                  [0, 2, 0], [0, 2, 1], [0, 2, 2], 
@@ -76,10 +78,65 @@ cube = np.array([[0, 0, 0], [0, 0, 1], [0, 0, 2],
                  [5, 1, 0], [5, 1, 1], [5, 1, 2],
                  [5, 2, 0], [5, 2, 1], [5, 2, 2]])
 
-# print(cube[[45], :])
-cube = l_prime_move(cube)
+shuffle = " ".join(sys.argv[1:])
+shuffle_list = shuffle.split()
+shuffle_list = [c.upper() for c in shuffle_list]
 
-for row in cube:
+moves = {
+    "U": u_move,
+    "U'": u_prime_move,
+    "U2": lambda cube: u_move(u_move(cube)),
+    "L": l_move,
+    "L'": l_prime_move,
+    "L2": lambda cube: l_move(l_move(cube)),
+    "F": f_move,
+    "F'": f_prime_move,
+    "F2": lambda cube: f_move(f_move(cube)),
+    "R": r_move,
+    "R'": r_prime_move,
+    "R2": lambda cube: r_move(r_move(cube)),
+    "B": b_move,
+    "B'": b_prime_move,
+    "B2": lambda cube: b_move(b_move(cube)),
+    "D": d_move,
+    "D'": d_prime_move,
+    "D2": lambda cube: d_move(d_move(cube))
+}
+
+for move in shuffle_list:
+    if move not in moves:
+        print("Error: Invalid move -", move)
+        exit()
+    cube = moves[move](cube)
+
+first_word = True
+count = 0
+color_codes = ["\033[37m", "\033[38;5;202m", "\033[32m", "\033[91m", "\033[34m", "\033[93m"]
+reset_code = "\033[0m"
+
+for i, row in enumerate(cube):
     face_index, _, _ = row
     color = colors[face_index]
-    print(color)
+
+    if first_word and count < 6:
+        print(f"{color_codes[count]}{colors[count].upper()}{reset_code} : ", end="")
+        count += 1
+        first_word = False
+
+    if color == "white":
+        print(f"{color_codes[0]}{color}{reset_code}", end=" ")
+    elif color == "orange":
+        print(f"{color_codes[1]}{color}{reset_code}", end=" ")
+    elif color == "green":
+        print(f"{color_codes[2]}{color}{reset_code}", end=" ")
+    elif color == "red":
+        print(f"{color_codes[3]}{color}{reset_code}", end=" ")
+    elif color == "blue":
+        print(f"{color_codes[4]}{color}{reset_code}", end=" ")
+    elif color == "yellow":
+        print(f"{color_codes[5]}{color}{reset_code}", end=" ")
+
+    if (i + 1) % 9 == 0:
+        print()
+        first_word = True
+
