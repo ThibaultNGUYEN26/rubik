@@ -53,7 +53,6 @@ W W W O O O G G G R R R B B B Y Y Y
 51 52 53 Y Y Y 5
 """
 
-
 cube = np.array([[0, 0, 0], [0, 0, 1], [0, 0, 2],
                  [0, 1, 0], [0, 1, 1], [0, 1, 2],
                  [0, 2, 0], [0, 2, 1], [0, 2, 2], 
@@ -119,24 +118,29 @@ for i, row in enumerate(cube):
     color = colors[face_index]
 
     if first_word and count < 6:
-        print(f"{color_codes[count]}{colors[count].upper()}{reset_code} : ", end="")
+        print(f"\n{color_codes[count]}{colors[count].upper()}{reset_code} :")
+        print("_" * 28)
+
         count += 1
         first_word = False
 
     if color == "white":
-        print(f"{color_codes[0]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[0]} {format(color, '<6')}{reset_code} ", end="")
     elif color == "orange":
-        print(f"{color_codes[1]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[1]} {format(color, '<6')}{reset_code} ", end="")
     elif color == "green":
-        print(f"{color_codes[2]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[2]} {format(color, '<6')}{reset_code} ", end="")
     elif color == "red":
-        print(f"{color_codes[3]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[3]} {format(color, '<6')}{reset_code} ", end="")
     elif color == "blue":
-        print(f"{color_codes[4]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[4]} {format(color, '<6')}{reset_code} ", end="")
     elif color == "yellow":
-        print(f"{color_codes[5]}{color}{reset_code}", end=" ")
+        print(f"|{color_codes[5]} {format(color, '<6')}{reset_code} ", end="")
 
-    if (i + 1) % 9 == 0:
-        print()
-        first_word = True
+    if (i + 1) % 3 == 0:
+        if i % 3 == 2:
+            print(f"{reset_code}|")
+            print("_" * 28)
 
+        if (i + 1) % 9 == 0:
+            first_word = True
