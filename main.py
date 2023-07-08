@@ -3,15 +3,7 @@ from moves import *
 import sys
 from tkinter import *
 
-# Define the colors for each face of the Rubik's Cube
-colors = {
-	0: 'white',
-	1: 'orange',
-	2: 'green',
-	3: 'red',
-	4: 'blue',
-	5: 'yellow'
-}
+
 
 """
 	  W W W
@@ -53,6 +45,15 @@ W W W O O O G G G R R R B B B Y Y Y
 48 49 50 Y Y Y 5
 51 52 53 Y Y Y 5
 """
+
+colors = {
+	0: 'white',
+	1: 'orange',
+	2: 'green',
+	3: 'red',
+	4: 'blue',
+	5: 'yellow'
+}
 
 cube = np.array([[0, 0, 0], [0, 0, 1], [0, 0, 2],
 				 [0, 1, 0], [0, 1, 1], [0, 1, 2],
@@ -114,9 +115,11 @@ count = 0
 color_codes = ["\033[37m", "\033[38;5;202m", "\033[32m", "\033[91m", "\033[34m", "\033[93m"]
 reset_code = "\033[0m"
 
+cube_color = []
 for i, row in enumerate(cube):
 	face_index, _, _ = row
 	color = colors[face_index]
+	cube_color.append(color)
 
 	if first_word and count < 6:
 		print(f"\n{color_codes[count]}{colors[count].upper()}{reset_code} :")
@@ -146,11 +149,9 @@ for i, row in enumerate(cube):
 		if (i + 1) % 9 == 0:
 			first_word = True
 
-print(cube)
-
 def quit(event):
-    print("Close window.\n")
-    root.destroy()
+	print("Close window.\n")
+	root.destroy()
 
 root = Tk()
 root.title("Rubik's Cube")
@@ -158,11 +159,42 @@ WIDTH = 1080
 HEIGHT = 720
 root.geometry(f"{WIDTH}x{HEIGHT}")
 
-frame = Frame(root, bg='black', width=WIDTH, height=HEIGHT)
-frame.place(relx=0.5, rely=0.5, anchor='center')
+# frame = Frame(root, bg='black', width=WIDTH, height=HEIGHT)
+# frame.place(relx=0.5, rely=0.5, anchor='center')
 
-shuffle_lbl = Label(frame, text=shuffle, font=("Arial", 20))
-shuffle_lbl.place(relx=0.5, rely=0.5)
+
+
+cube_color = []
+for i, row in enumerate(cube):
+	face_index, _, _ = row
+	color = colors[face_index]
+	cube_color.append(color)
+
+cube_canvas = Canvas(root, width=WIDTH, height=HEIGHT)
+
+shuffle_lbl = Label(cube_canvas, text=shuffle, font=("Arial", 20))
+shuffle_lbl.place(relx=0.4, rely=0.4)
+
+x1 = 0
+y1 = 0
+x2 = 30
+y2 = 30
+row_count = 0
+
+for i in range(len(cube_color)):
+    cube_canvas.create_rectangle(x1, y1, x2, y2, fill=cube_color[i], outline='black')
+
+    if (i + 1) % 3 == 0:
+        x1 = 0
+        x2 = 30
+        y1 += 30
+        y2 += 30
+    else:
+        x1 += 30
+        x2 += 30
+
+cube_canvas.place(x=0, y=30)
+
 
 root.bind('<Escape>', quit)
 root.mainloop()
