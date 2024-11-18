@@ -31,7 +31,7 @@ faces = [
 ]
 
 # Draw a single cubie with specified colors for outer faces and black for inner faces
-def draw_cubie(position, color_assignment, is_outer):
+def draw_cubie(position, color_assignment, x, y, z):
     glPushMatrix()
     glTranslatef(*position)
 
@@ -42,11 +42,13 @@ def draw_cubie(position, color_assignment, is_outer):
     # Draw faces with colors
     glBegin(GL_QUADS)
     for i, face in enumerate(faces):
-        # If it's an outer cubie, use the color assignment; otherwise, make it black
-        if is_outer:
+        # Determine if the current face is an outer face
+        if (i == 0 and z == -1) or (i == 1 and z == 1) or \
+           (i == 2 and x == -1) or (i == 3 and x == 1) or \
+           (i == 4 and y == -1) or (i == 5 and y == 1):
             glColor3fv(colors[color_assignment[i]])
         else:
-            glColor3fv(colors['black'])
+            glColor3fv(colors['black'])  # Inner faces are black
         for vertex in face:
             glVertex3fv(vertices[vertex])
     glEnd()
@@ -70,23 +72,16 @@ def create_rubiks_cube():
     for x in range(-1, 2):
         for y in range(-1, 2):
             for z in range(-1, 2):
-                # Determine if the cubie is on the outer layer
-                is_outer = x in [-1, 1] or y in [-1, 1] or z in [-1, 1]
-
                 # Assign face colors for outer cubies, and black for inner cubies
-                if is_outer:
-                    color_assignment = [
-                        'blue' if z == -1 else 'green' if z == 1 else 'black',
-                        'green' if z == 1 else 'blue' if z == -1 else 'black',
-                        'orange' if x == -1 else 'red' if x == 1 else 'black',
-                        'red' if x == 1 else 'orange' if x == -1 else 'black',
-                        'yellow' if y == -1 else 'white' if y == 1 else 'black',
-                        'white' if y == 1 else 'yellow' if y == -1 else 'black'
-                    ]
-                else:
-                    color_assignment = ['black'] * 6
-
-                rubiks_cube.append(((x, y, z), color_assignment, is_outer))
+                color_assignment = [
+                    'blue' if z == -1 else 'green' if z == 1 else 'black',
+                    'green' if z == 1 else 'blue' if z == -1 else 'black',
+                    'orange' if x == -1 else 'red' if x == 1 else 'black',
+                    'red' if x == 1 else 'orange' if x == -1 else 'black',
+                    'yellow' if y == -1 else 'white' if y == 1 else 'black',
+                    'white' if y == 1 else 'yellow' if y == -1 else 'black'
+                ]
+                rubiks_cube.append(((x, y, z), color_assignment, x, y, z))
     return rubiks_cube
 
 # Main function
@@ -105,16 +100,19 @@ def main():
 
     while True:
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                pygame.quit()
+				quit()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glRotatef(1, 3, 1, 1)
 
         # Draw each cubie in the Rubik's Cube
-        for position, color_assignment, is_outer in rubiks_cube:
-            draw_cubie(position, color_assignment, is_outer)
+        for position, color_assignment, x, y, z in rubiks_cube:
+            draw_cubie(position, color_assignment, x, y, z)
 
         pygame.display.flip()
         pygame.time.wait(10)
