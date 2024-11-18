@@ -100,12 +100,12 @@ def main():
 
     while True:
         for event in pygame.event.get():
-             if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 pygame.quit()
-				quit()
+                quit()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         glRotatef(1, 3, 1, 1)
