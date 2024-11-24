@@ -1,9 +1,4 @@
-import pygame
-from pygame.locals import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
-
-# Define colors for Rubik's Cube (WCA color scheme)
+# Global definitions for colors, vertices, and faces
 colors = {
     'white': (1, 1, 1),
     'yellow': (1, 1, 0),
@@ -14,13 +9,11 @@ colors = {
     'black': (0, 0, 0)
 }
 
-# Define vertices for a single cubie (slightly increased size)
 vertices = [
     [-0.47, -0.47, -0.47], [0.47, -0.47, -0.47], [0.47, 0.47, -0.47], [-0.47, 0.47, -0.47],
     [-0.47, -0.47, 0.47], [0.47, -0.47, 0.47], [0.47, 0.47, 0.47], [-0.47, 0.47, 0.47]
 ]
 
-# Define faces of a cubie
 faces = [
     (0, 1, 2, 3),  # Back face
     (4, 5, 6, 7),  # Front face
@@ -30,32 +23,31 @@ faces = [
     (3, 2, 6, 7)   # Top face
 ]
 
-# Draw a single cubie with specified colors for outer faces and black for inner faces
 def draw_cubie(position, color_assignment, x, y, z):
+    """Draw a single cubie with specified colors for outer faces."""
+    from OpenGL.GL import glPushMatrix, glTranslatef, glEnable, glPolygonOffset, glBegin, glColor3fv, glVertex3fv, \
+        glEnd, glDisable, glPopMatrix, GL_POLYGON_OFFSET_FILL, GL_QUADS, GL_LINES, glLineWidth
+
     glPushMatrix()
     glTranslatef(*position)
 
-    # Increase polygon offset to reduce z-fighting
     glEnable(GL_POLYGON_OFFSET_FILL)
     glPolygonOffset(2.0, 2.0)
 
-    # Draw faces with colors
     glBegin(GL_QUADS)
     for i, face in enumerate(faces):
-        # Determine if the current face is an outer face
         if (i == 0 and z == -1) or (i == 1 and z == 1) or \
            (i == 2 and x == -1) or (i == 3 and x == 1) or \
            (i == 4 and y == -1) or (i == 5 and y == 1):
             glColor3fv(colors[color_assignment[i]])
         else:
-            glColor3fv(colors['black'])  # Inner faces are black
+            glColor3fv(colors['black'])
         for vertex in face:
             glVertex3fv(vertices[vertex])
     glEnd()
 
     glDisable(GL_POLYGON_OFFSET_FILL)
 
-    # Draw black borders
     glColor3fv(colors['black'])
     glLineWidth(2)
     glBegin(GL_LINES)
@@ -66,13 +58,12 @@ def draw_cubie(position, color_assignment, x, y, z):
 
     glPopMatrix()
 
-# Create a 3x3x3 grid of cubies
 def create_rubiks_cube():
+    """Create a 3x3x3 grid of cubies."""
     rubiks_cube = []
     for x in range(-1, 2):
         for y in range(-1, 2):
             for z in range(-1, 2):
-                # Assign face colors for outer cubies, and black for inner cubies
                 color_assignment = [
                     'blue' if z == -1 else 'green' if z == 1 else 'black',
                     'green' if z == 1 else 'blue' if z == -1 else 'black',
@@ -84,15 +75,31 @@ def create_rubiks_cube():
                 rubiks_cube.append(((x, y, z), color_assignment, x, y, z))
     return rubiks_cube
 
-# Main function
-def main():
+def render_rubiks_cube(rubiks_cube):
+    """Render the Rubik's cube in an OpenGL context."""
+    from OpenGL.GL import glClear, glRotatef, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
+    import pygame
+
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+    glRotatef(1, 3, 1, 1)
+    for position, color_assignment, x, y, z in rubiks_cube:
+        draw_cubie(position, color_assignment, x, y, z)
+    pygame.display.flip()
+    pygame.time.wait(10)
+
+def start_rubiks_visualizer():
+    """Start the Rubik's Cube visualizer."""
+    import pygame
+    from pygame.locals import DOUBLEBUF, OPENGL
+    from OpenGL.GL import glEnable, glDepthFunc, glTranslatef, GL_DEPTH_TEST, GL_LEQUAL
+    from OpenGL.GLU import gluPerspective
+
     pygame.init()
     display = (800, 600)
     pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
     gluPerspective(45, (display[0] / display[1]), 0.1, 100.0)
     glTranslatef(0.0, 0.0, -15)
 
-    # Enable depth testing
     glEnable(GL_DEPTH_TEST)
     glDepthFunc(GL_LEQUAL)
 
@@ -107,15 +114,4 @@ def main():
                 pygame.quit()
                 quit()
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glRotatef(1, 3, 1, 1)
-
-        # Draw each cubie in the Rubik's Cube
-        for position, color_assignment, x, y, z in rubiks_cube:
-            draw_cubie(position, color_assignment, x, y, z)
-
-        pygame.display.flip()
-        pygame.time.wait(10)
-
-if __name__ == "__main__":
-    main()
+        render_rubiks_cube(rubiks_cube)
