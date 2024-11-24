@@ -1,6 +1,5 @@
-valid_move_list = ["F", "F'", "F2", "R", "R'", "R2", "U", "U'", "U2", "B", "B'", "B2", "L", "L'", "L2", "D", "D'", "D2"]
-
-def shuffle_parsing(shuffle):
+# Parse if the shuffle is valid and return the list of the shuffle
+def shuffle_parsing(shuffle, valid_move_list):
     shuffle = shuffle.upper().strip()
     moves = shuffle.split()
     for move in moves:
