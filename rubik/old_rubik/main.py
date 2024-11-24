@@ -77,9 +77,9 @@ cube = np.array([[0, 0, 0], [0, 0, 1], [0, 0, 2],
 				 [5, 1, 0], [5, 1, 1], [5, 1, 2],
 				 [5, 2, 0], [5, 2, 1], [5, 2, 2]])
 
-shuffle = " ".join(sys.argv[1:])
-shuffle_list = shuffle.split()
-shuffle_list = [c.upper() for c in shuffle_list]
+scramble = " ".join(sys.argv[1:])
+scramble_list = scramble.split()
+scramble_list = [c.upper() for c in scramble_list]
 
 moves = {
 	"U": u_move,
@@ -102,7 +102,7 @@ moves = {
 	"D2": lambda cube: d_move(d_move(cube))
 }
 
-for move in shuffle_list:
+for move in scramble_list:
 	if move not in moves:
 		print("Error: Invalid move -", move)
 		exit()
@@ -170,8 +170,8 @@ for i, row in enumerate(cube):
 
 cube_canvas = Canvas(root, width=WIDTH, height=HEIGHT)
 
-shuffle_lbl = Label(cube_canvas, text=shuffle, font=("Arial", 20))
-shuffle_lbl.place(relx=0.4, rely=0.4)
+scramble_lbl = Label(cube_canvas, text=scramble, font=("Arial", 20))
+scramble_lbl.place(relx=0.4, rely=0.4)
 
 x1 = 0
 y1 = 0
