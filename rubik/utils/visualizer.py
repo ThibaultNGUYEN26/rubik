@@ -1,117 +1,284 @@
-# Global definitions for colors, vertices, and faces
-colors = {
-    'white': (1, 1, 1),
-    'yellow': (1, 1, 0),
-    'red': (1, 0, 0),
-    'orange': (1, 0.5, 0),
-    'green': (0, 1, 0),
-    'blue': (0, 0, 1),
-    'black': (0, 0, 0)
-}
+from vpython import box, vector, rate, scene, color, compound, canvas, distant_light, local_light
+import numpy as np
+from threading import Lock
+import re  # For regular expression parsing
 
-vertices = [
-    [-0.47, -0.47, -0.47], [0.47, -0.47, -0.47], [0.47, 0.47, -0.47], [-0.47, 0.47, -0.47],
-    [-0.47, -0.47, 0.47], [0.47, -0.47, 0.47], [0.47, 0.47, 0.47], [-0.47, 0.47, 0.47]
-]
+def start_rubiks_visualizer(scramble_str):
+    # Initialize the scene
+    scene = canvas(
+        background=vector(0.95, 0.95, 0.95),  # Light background
+        width=1300,
+        height=700,
+        title="<b style='position: absolute; font-size: calc(1vw + 1vh); font-weight: bold; color: black; left: 50%; top: 5%; transform: translate(-50%, 0);'>Rubik's Cube Visualizer</b>",
+        center=vector(0, 0, 0)
+    )
 
-faces = [
-    (0, 1, 2, 3),  # Back face
-    (4, 5, 6, 7),  # Front face
-    (0, 3, 7, 4),  # Left face
-    (1, 2, 6, 5),  # Right face
-    (0, 1, 5, 4),  # Bottom face
-    (3, 2, 6, 7)   # Top face
-]
+    # Apply CSS styling to center the canvas
+    scene.append_to_title("""
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            overflow: hidden;
+        }
+        canvas {
+            border: 2px solid black; /* Optional: Add border around the canvas */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Optional: Add shadow for styling */
+        }
+    </style>
+    """)
 
-def draw_cubie(position, color_assignment, x, y, z):
-    """Draw a single cubie with specified colors for outer faces."""
-    from OpenGL.GL import glPushMatrix, glTranslatef, glEnable, glPolygonOffset, glBegin, glColor3fv, glVertex3fv, \
-        glEnd, glDisable, glPopMatrix, GL_POLYGON_OFFSET_FILL, GL_QUADS, GL_LINES, glLineWidth
+    # Add ambient light to illuminate the entire scene evenly
+    scene.ambient = color.gray(0.1)  # Softer gray ambient light
 
-    glPushMatrix()
-    glTranslatef(*position)
+    # Add directional lights
+    distant_light(direction=vector(1, -1, -1), color=color.white)  # Light from top-right
+    distant_light(direction=vector(-1, -1, -1), color=color.gray(0.5))  # Light from top-left
+    distant_light(direction=vector(1, 1, 1), color=color.gray(0.3))  # Light from bottom-right
 
-    glEnable(GL_POLYGON_OFFSET_FILL)
-    glPolygonOffset(2.0, 2.0)
+    # Define colors for each face
+    face_colors = {
+        'U': color.white,                   # Up (White)
+        'D': vector(1, 1, 0),               # Down (Bright Yellow)
+        'F': vector(0, 0.8, 0),             # Front (Bright Green)
+        'B': vector(0, 0.4, 1),             # Back (Sky Blue)
+        'L': vector(1, 0.55, 0),            # Left (Distinct Orange)
+        'R': vector(1, 0, 0),               # Right (Bright Red)
+    }
 
-    glBegin(GL_QUADS)
-    for i, face in enumerate(faces):
-        if (i == 0 and z == -1) or (i == 1 and z == 1) or \
-           (i == 2 and x == -1) or (i == 3 and x == 1) or \
-           (i == 4 and y == -1) or (i == 5 and y == 1):
-            glColor3fv(colors[color_assignment[i]])
+    # Offset to center the Rubik's Cube at the origin
+    offset = -1
+
+    # Create a dictionary to hold all the smaller cubes with their positions as keys
+    cubes = {}
+
+    # Lock for handling animation spamming
+    animation_lock = Lock()
+
+    # Track the key state to prevent repeated actions
+    key_state = {}
+
+    # Function to create a single cubie with colored faces
+    def create_cubie(x, y, z):
+        scale = 0.1  # Smaller scale factor for the entire cube
+        cubie = box(
+            pos=vector((x + offset) * scale, (y + offset) * scale, (z + offset) * scale),  # Scaled position
+            size=vector(0.95 * scale, 0.95 * scale, 0.95 * scale),  # Scaled size
+            color=color.black,
+            shininess=0.6  # Make it slightly shiny
+        )
+
+        # Create faces with appropriate colors, scaled to match the cubie
+        faces = []
+        if y == 2:
+            faces.append(box(
+                pos=cubie.pos + vector(0, 0.49 * scale, 0),
+                size=vector(0.95 * scale, 0.02 * scale, 0.95 * scale),
+                color=face_colors['U']
+            ))
+        if y == 0:
+            faces.append(box(
+                pos=cubie.pos + vector(0, -0.49 * scale, 0),
+                size=vector(0.95 * scale, 0.02 * scale, 0.95 * scale),
+                color=face_colors['D']
+            ))
+        if z == 2:
+            faces.append(box(
+                pos=cubie.pos + vector(0, 0, 0.49 * scale),
+                size=vector(0.95 * scale, 0.95 * scale, 0.02 * scale),
+                color=face_colors['F']
+            ))
+        if z == 0:
+            faces.append(box(
+                pos=cubie.pos + vector(0, 0, -0.49 * scale),
+                size=vector(0.95 * scale, 0.95 * scale, 0.02 * scale),
+                color=face_colors['B']
+            ))
+        if x == 0:
+            faces.append(box(
+                pos=cubie.pos + vector(-0.49 * scale, 0, 0),
+                size=vector(0.02 * scale, 0.95 * scale, 0.95 * scale),
+                color=face_colors['L']
+            ))
+        if x == 2:
+            faces.append(box(
+                pos=cubie.pos + vector(0.49 * scale, 0, 0),
+                size=vector(0.02 * scale, 0.95 * scale, 0.95 * scale),
+                color=face_colors['R']
+            ))
+
+        # Group the cubie and its faces
+        group = [cubie] + faces
+        return compound(group)
+
+    # Create the 3x3x3 grid of cubies
+    for x in range(3):
+        for y in range(3):
+            for z in range(3):
+                position = (x, y, z)
+                cubie = create_cubie(x, y, z)
+                cubes[position] = cubie
+
+    # Function to rotate a face
+    def rotate_face(face, direction, animate=True):
+        if animate:
+            if not animation_lock.acquire(blocking=False):  # Check if lock is available
+                return  # If another animation is in progress, ignore key press
+
+        try:
+            # Define rotation parameters
+            angle = (np.pi / 2) * direction  # 90 degrees in radians, direction determines clockwise or counterclockwise
+            steps = 30  # Number of steps for the animation
+            dt = 0.001  # Time between steps
+
+            # Select the cubies to rotate and define the rotation axis and origin
+            if face == 'U':
+                layer = [pos for pos in cubes if pos[1] == 2]
+                axis = vector(0, -1, 0)  # Rotate around the y-axis
+                origin = vector(0, 0.2, 0)  # Scaled origin
+            elif face == 'D':
+                layer = [pos for pos in cubes if pos[1] == 0]
+                axis = vector(0, 1, 0)  # Rotate around the y-axis
+                origin = vector(0, -0.2, 0)  # Scaled origin
+            elif face == 'F':
+                layer = [pos for pos in cubes if pos[2] == 2]
+                axis = vector(0, 0, -1)  # Rotate around the z-axis
+                origin = vector(0, 0, 0.2)  # Scaled origin
+            elif face == 'B':
+                layer = [pos for pos in cubes if pos[2] == 0]
+                axis = vector(0, 0, 1)  # Rotate around the z-axis
+                origin = vector(0, 0, -0.2)  # Scaled origin
+            elif face == 'L':
+                layer = [pos for pos in cubes if pos[0] == 0]
+                axis = vector(1, 0, 0)  # Rotate around the x-axis
+                origin = vector(-0.2, 0, 0)  # Scaled origin
+            elif face == 'R':
+                layer = [pos for pos in cubes if pos[0] == 2]
+                axis = vector(-1, 0, 0)  # Rotate around the x-axis
+                origin = vector(0.2, 0, 0)  # Scaled origin
+            else:
+                return
+
+            if animate:
+                # Animate the rotation of the entire face
+                for i in range(steps):
+                    rate(1 / dt)
+                    for pos in layer:
+                        cubie = cubes[pos]
+                        cubie.rotate(angle=angle / steps, axis=axis, origin=origin)
+            else:
+                # Instant rotation without animation
+                for pos in layer:
+                    cubie = cubes[pos]
+                    cubie.rotate(angle=angle, axis=axis, origin=origin)
+
+            # Recalculate the positions of cubies in the rotated layer
+            new_positions = {}
+            for pos in layer:
+                cubie = cubes[pos]
+
+                # Calculate the new position after rotation
+                relative_pos = vector(pos[0] - 1, pos[1] - 1, pos[2] - 1)
+                rotated_pos = relative_pos.rotate(angle=angle, axis=axis)
+                new_pos = (round(rotated_pos.x + 1), round(rotated_pos.y + 1), round(rotated_pos.z + 1))
+
+                # Map the new position
+                new_positions[new_pos] = cubie
+
+            # Update the cubes dictionary with the new positions
+            for pos in layer:
+                del cubes[pos]
+            cubes.update(new_positions)
+        finally:
+            if animate:
+                animation_lock.release()  # Always release the lock if animation was used
+
+    # Mapping user keys to faces (user can only press 'R' or 'r')
+    key_to_face = {
+        'r': ('R', 1),   # R: Rotate right face clockwise
+        "R": ('R', -1), # R': Rotate right face counterclockwise
+        'u': ('U', 1),
+        "U": ('U', -1),
+        'f': ('F', 1),
+        "F": ('F', -1),
+        'l': ('L', 1),
+        "L": ('L', -1),
+        'd': ('D', 1),
+        "D": ('D', -1),
+        'b': ('B', 1),
+        "B": ('B', -1),
+    }
+
+    # Mapping scramble moves to faces and directions
+    move_to_face = {
+        'R': ('R', 1),   # R: Rotate right face clockwise
+        "R'": ('R', -1), # R': Rotate right face counterclockwise
+        'U': ('U', 1),
+        "U'": ('U', -1),
+        'F': ('F', 1),
+        "F'": ('F', -1),
+        'L': ('L', 1),
+        "L'": ('L', -1),
+        'D': ('D', 1),
+        "D'": ('D', -1),
+        'B': ('B', 1),
+        "B'": ('B', -1),
+        'R2': ('R', 2),   # R2: Rotate right face 180 degrees
+        'U2': ('U', 2),
+        'F2': ('F', 2),
+        'L2': ('L', 2),
+        'D2': ('D', 2),
+        'B2': ('B', 2),
+    }
+
+    # Function to parse the scramble string into moves
+    def parse_scramble(scramble_str):
+        # Use regular expressions to split the scramble string into moves
+        tokens = re.findall(r"[URFDLB]2?'?", scramble_str)
+        moves = []
+        for token in tokens:
+            if token in move_to_face:
+                moves.append(token)
+            else:
+                print(f"Invalid move in scramble: {token}")
+        return moves
+
+    # Parse the scramble string into a list of moves
+    scramble_moves = parse_scramble(scramble_str)
+
+    # Apply the scramble before entering the main loop
+    for move in scramble_moves:
+        face, direction = move_to_face[move]
+        # For double turns (e.g., 'R2'), apply the rotation twice
+        if direction == 2:
+            rotate_face(face, 1, animate=False)
+            rotate_face(face, 1, animate=False)
         else:
-            glColor3fv(colors['black'])
-        for vertex in face:
-            glVertex3fv(vertices[vertex])
-    glEnd()
+            rotate_face(face, direction, animate=False)
 
-    glDisable(GL_POLYGON_OFFSET_FILL)
+    # Handle key press events
+    def keydown_handler(evt):
+        s = evt.key
+        if s in key_to_face and not key_state.get(s, False):  # Only process if key is not already pressed
+            key_state[s] = True
+            face, direction = key_to_face[s]
+            rotate_face(face, direction)
 
-    glColor3fv(colors['black'])
-    glLineWidth(2)
-    glBegin(GL_LINES)
-    for edge in [(0, 1), (1, 2), (2, 3), (3, 0), (4, 5), (5, 6), (6, 7), (7, 4), (0, 4), (1, 5), (2, 6), (3, 7)]:
-        for vertex in edge:
-            glVertex3fv(vertices[vertex])
-    glEnd()
+    # Handle key release events
+    def keyup_handler(evt):
+        s = evt.key
+        if s in key_state:
+            key_state[s] = False  # Mark the key as released
 
-    glPopMatrix()
+    # Bind the key input functions
+    scene.bind('keydown', keydown_handler)
+    scene.bind('keyup', keyup_handler)
 
-def create_rubiks_cube():
-    """Create a 3x3x3 grid of cubies."""
-    rubiks_cube = []
-    for x in range(-1, 2):
-        for y in range(-1, 2):
-            for z in range(-1, 2):
-                color_assignment = [
-                    'blue' if z == -1 else 'green' if z == 1 else 'black',
-                    'green' if z == 1 else 'blue' if z == -1 else 'black',
-                    'orange' if x == -1 else 'red' if x == 1 else 'black',
-                    'red' if x == 1 else 'orange' if x == -1 else 'black',
-                    'yellow' if y == -1 else 'white' if y == 1 else 'black',
-                    'white' if y == 1 else 'yellow' if y == -1 else 'black'
-                ]
-                rubiks_cube.append(((x, y, z), color_assignment, x, y, z))
-    return rubiks_cube
-
-def render_rubiks_cube(rubiks_cube):
-    """Render the Rubik's cube in an OpenGL context."""
-    from OpenGL.GL import glClear, glRotatef, GL_COLOR_BUFFER_BIT, GL_DEPTH_BUFFER_BIT
-    import pygame
-
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-    glRotatef(1, 3, 1, 1)
-    for position, color_assignment, x, y, z in rubiks_cube:
-        draw_cubie(position, color_assignment, x, y, z)
-    pygame.display.flip()
-    pygame.time.wait(10)
-
-def start_rubiks_visualizer():
-    """Start the Rubik's Cube visualizer."""
-    import pygame
-    from pygame.locals import DOUBLEBUF, OPENGL
-    from OpenGL.GL import glEnable, glDepthFunc, glTranslatef, GL_DEPTH_TEST, GL_LEQUAL
-    from OpenGL.GLU import gluPerspective
-
-    pygame.init()
-    display = (800, 600)
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
-    gluPerspective(45, (display[0] / display[1]), 0.1, 100.0)
-    glTranslatef(0.0, 0.0, -15)
-
-    glEnable(GL_DEPTH_TEST)
-    glDepthFunc(GL_LEQUAL)
-
-    rubiks_cube = create_rubiks_cube()
-
+    # Keep the scene open
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                quit()
+        rate(60)
 
-        render_rubiks_cube(rubiks_cube)

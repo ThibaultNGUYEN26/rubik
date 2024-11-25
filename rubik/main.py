@@ -33,7 +33,7 @@ def main():
 
     # Show visualizer if -v is specified
     if args.visualizer:
-        start_rubiks_visualizer()
+        start_rubiks_visualizer(moves)
 
 if __name__ == "__main__":
     main()
