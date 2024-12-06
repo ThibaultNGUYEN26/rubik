@@ -85,8 +85,8 @@ def Fprime(cube):
     temp = cube['U'][2].copy()
     cube['U'][2][0], cube['U'][2][1], cube['U'][2][2] = cube['R'][0][0], cube['R'][1][0], cube['R'][2][0]
     cube['R'][0][0], cube['R'][1][0], cube['R'][2][0] = cube['D'][0][2], cube['D'][0][1], cube['D'][0][0]
-    cube['D'][0][0], cube['D'][0][1], cube['D'][0][2] = cube['L'][2][2], cube['L'][1][2], cube['L'][0][2]
-    cube['L'][0][2], cube['L'][1][2], cube['L'][2][2] = temp
+    cube['D'][0][0], cube['D'][0][1], cube['D'][0][2] = cube['L'][0][2], cube['L'][1][2], cube['L'][2][2]
+    cube['L'][0][2], cube['L'][1][2], cube['L'][2][2] = temp[::-1]
 
 
 def F2(cube):
@@ -103,7 +103,7 @@ def Lturn(cube):
     cube['U'][0][0], cube['U'][1][0], cube['U'][2][0] = cube['B'][2][2], cube['B'][1][2], cube['B'][0][2]
     cube['B'][0][2], cube['B'][1][2], cube['B'][2][2] = cube['D'][2][0], cube['D'][1][0], cube['D'][0][0]
     cube['D'][0][0], cube['D'][1][0], cube['D'][2][0] = cube['F'][0][0], cube['F'][1][0], cube['F'][2][0]
-    cube['F'][0][0], cube['F'][1][0], cube['F'][2][0] = temp[::-1]
+    cube['F'][0][0], cube['F'][1][0], cube['F'][2][0] = temp
 
 
 def Lprime(cube):
@@ -116,6 +116,7 @@ def Lprime(cube):
     cube['F'][0][0], cube['F'][1][0], cube['F'][2][0] = cube['D'][0][0], cube['D'][1][0], cube['D'][2][0]
     cube['D'][0][0], cube['D'][1][0], cube['D'][2][0] = cube['B'][2][2], cube['B'][1][2], cube['B'][0][2]
     cube['B'][0][2], cube['B'][1][2], cube['B'][2][2] = temp[::-1]
+
 
 
 def L2(cube):
@@ -141,7 +142,7 @@ def Rprime(cube):
 
     # Update adjacent edges: U, B, D, F
     temp = [cube['U'][0][2], cube['U'][1][2], cube['U'][2][2]]
-    cube['U'][0][2], cube['U'][1][2], cube['U'][2][2] = cube['B'][0][0], cube['B'][1][0], cube['B'][2][0]
+    cube['U'][0][2], cube['U'][1][2], cube['U'][2][2] = cube['B'][2][0], cube['B'][1][0], cube['B'][0][0]
     cube['B'][0][0], cube['B'][1][0], cube['B'][2][0] = cube['D'][2][2], cube['D'][1][2], cube['D'][0][2]
     cube['D'][0][2], cube['D'][1][2], cube['D'][2][2] = cube['F'][0][2], cube['F'][1][2], cube['F'][2][2]
     cube['F'][0][2], cube['F'][1][2], cube['F'][2][2] = temp
@@ -160,7 +161,7 @@ def Bturn(cube):
     temp = cube['U'][0].copy()
     cube['U'][0][0], cube['U'][0][1], cube['U'][0][2] = cube['R'][0][2], cube['R'][1][2], cube['R'][2][2]
     cube['R'][0][2], cube['R'][1][2], cube['R'][2][2] = cube['D'][2][2], cube['D'][2][1], cube['D'][2][0]
-    cube['D'][2][0], cube['D'][2][1], cube['D'][2][2] = cube['L'][2][0], cube['L'][1][0], cube['L'][0][0]
+    cube['D'][2][0], cube['D'][2][1], cube['D'][2][2] = cube['L'][0][0], cube['L'][1][0], cube['L'][2][0]
     cube['L'][0][0], cube['L'][1][0], cube['L'][2][0] = temp[::-1]
 
 
@@ -170,10 +171,10 @@ def Bprime(cube):
 
     # Update the adjacent edges: U, L, D, R
     temp = cube['U'][0].copy()
-    cube['U'][0][0], cube['U'][0][1], cube['U'][0][2] = cube['L'][0][0], cube['L'][1][0], cube['L'][2][0]
+    cube['U'][0][0], cube['U'][0][1], cube['U'][0][2] = cube['L'][2][0], cube['L'][1][0], cube['L'][0][0]
     cube['L'][0][0], cube['L'][1][0], cube['L'][2][0] = cube['D'][2][0], cube['D'][2][1], cube['D'][2][2]
     cube['D'][2][0], cube['D'][2][1], cube['D'][2][2] = cube['R'][2][2], cube['R'][1][2], cube['R'][0][2]
-    cube['R'][0][2], cube['R'][1][2], cube['R'][2][2] = temp[::-1]
+    cube['R'][0][2], cube['R'][1][2], cube['R'][2][2] = temp
 
 
 def B2(cube):
