@@ -56,8 +56,6 @@ def apply_moves(cube, moves):
     for move in moves:
         if move in move_functions:
             move_functions[move](cube)
-        else:
-            print(f"Invalid move: {move}")
 
 
 # Define ANSI color codes
@@ -107,19 +105,23 @@ def main():
         parser.error("You must specify moves or use --random to generate them.")
 
     # Parse if the scramble is valid, if so return a list of the scramble
-    scramble = scramble_parsing(moves, valid_move_list)
-    print(f"Scramble parsed: {scramble}")
-
-    # Apply the moves to the cube
-    apply_moves(cube, scramble)
+    valid_scramble, scramble = scramble_parsing(moves, valid_move_list)
 
     # Show the cube's state after applying the moves
-    print("Cube state after moves:\n")
-    display_colored_cube(cube)
+    if valid_scramble:
+        print(f"Scramble parsed: {scramble}")
 
-    # Show visualizer if -v is specified
-    if args.visualizer:
-        start_rubiks_visualizer(moves)
+        # Apply the moves to the cube
+        apply_moves(cube, scramble)
+
+        print("Cube state after moves:\n")
+        display_colored_cube(cube)
+
+        # Show visualizer if -v is specified
+        if args.visualizer:
+            start_rubiks_visualizer(moves.upper())
+    else:
+        print(scramble)
 
 if __name__ == "__main__":
     main()

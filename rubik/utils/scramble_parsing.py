@@ -4,5 +4,5 @@ def scramble_parsing(scramble, valid_move_list):
     moves = scramble.split()
     for move in moves:
         if move not in valid_move_list:
-            return f"Wrong move! -> {move}"
-    return moves
+            return False, f"Wrong move! -> {move}"
+    return True, moves
