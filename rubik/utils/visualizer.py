@@ -1,7 +1,8 @@
-from vpython import box, vector, rate, scene, color, compound, canvas, distant_light, local_light
+from vpython import box, vector, rate, color, compound, canvas, distant_light, text, label
 import numpy as np
 from threading import Lock
 import re  # For regular expression parsing
+import time
 
 def start_rubiks_visualizer(scramble_str):
     # Initialize the scene
@@ -9,8 +10,18 @@ def start_rubiks_visualizer(scramble_str):
         background=vector(0.95, 0.95, 0.95),  # Light background
         width=1300,
         height=700,
-        title="<b style='position: absolute; font-size: calc(1vw + 1vh); font-weight: bold; color: black; left: 50%; top: 5%; transform: translate(-50%, 0);'>Rubik's Cube Visualizer</b>",
+        title="<b style='position: absolute; font-size: calc(1.5vw + 1.5vh); font-weight: bold; color: black; left: 50%; top: 5%; transform: translate(-50%, 0);'>Rubik's Cube Visualizer</b>",
         center=vector(0, 0, 0)
+    )
+
+    scramble_text = text(
+        pos=vector(0, 1, 0),  # Adjust position below the center
+        text=f"Scramble: {scramble_str}",  # Dynamic scramble string
+        align='center',
+        color=vector(0.1, 0.1, 0.1),  # Slightly gray for subtle visibility
+        height=0.1,  # Smaller text size
+        billboard=True,  # Always face the camera
+        emissive=True
     )
 
     # Apply CSS styling to center the canvas
@@ -26,7 +37,8 @@ def start_rubiks_visualizer(scramble_str):
             overflow: hidden;
         }
         canvas {
-            border: 2px solid black; /* Optional: Add border around the canvas */
+            border: calc(0.1vw + 0.1vh) solid black; /* Optional: Add border around the canvas */
+            border-radius: calc(1vw + 1vh);
             box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Optional: Add shadow for styling */
         }
     </style>
@@ -62,9 +74,10 @@ def start_rubiks_visualizer(scramble_str):
     # Track the key state to prevent repeated actions
     key_state = {}
 
+
     # Function to create a single cubie with colored faces
     def create_cubie(x, y, z):
-        scale = 0.1  # Smaller scale factor for the entire cube
+        scale = 0.3  # Smaller scale factor for the entire cube
         cubie = box(
             pos=vector((x + offset) * scale, (y + offset) * scale, (z + offset) * scale),  # Scaled position
             size=vector(0.95 * scale, 0.95 * scale, 0.95 * scale),  # Scaled size
@@ -72,7 +85,7 @@ def start_rubiks_visualizer(scramble_str):
             shininess=0.6  # Make it slightly shiny
         )
 
-        # Create faces with appropriate colors, scaled to match the cubie
+        # Create faces with appropriate colors
         faces = []
         if y == 2:
             faces.append(box(
@@ -113,7 +126,9 @@ def start_rubiks_visualizer(scramble_str):
 
         # Group the cubie and its faces
         group = [cubie] + faces
+
         return compound(group)
+
 
     # Create the 3x3x3 grid of cubies
     for x in range(3):
@@ -255,10 +270,11 @@ def start_rubiks_visualizer(scramble_str):
         face, direction = move_to_face[move]
         # For double turns (e.g., 'R2'), apply the rotation twice
         if direction == 2:
-            rotate_face(face, 1, animate=False)
-            rotate_face(face, 1, animate=False)
+            rotate_face(face, 1, animate=True)
+            rotate_face(face, 1, animate=True)
         else:
-            rotate_face(face, direction, animate=False)
+            rotate_face(face, direction, animate=True)
+        time.sleep(0.5)
 
     # Handle key press events
     def keydown_handler(evt):
@@ -281,4 +297,3 @@ def start_rubiks_visualizer(scramble_str):
     # Keep the scene open
     while True:
         rate(60)
-
