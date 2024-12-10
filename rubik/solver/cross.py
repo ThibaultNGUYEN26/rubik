@@ -1,4 +1,6 @@
 from solver.movements import Uturn, Uprime, U2, Dturn, Dprime, D2, Fturn, Fprime, F2, Rturn, Rprime, R2, Lturn, Lprime, L2, Bturn, Bprime, B2
+from collections import deque
+import time
 
 def solve_white_cross(cube):
     """
@@ -37,22 +39,43 @@ def solve_white_cross(cube):
         Bturn: "B", Bprime: "B'", B2: "B2"
     }
 
-    # Try solving with move sequences of increasing lengths
-    from itertools import product
+    # BFS setup
+    queue = deque()
+    queue.append((cube, [], 0))  # (current cube state, move sequence, depth)
+    visited = set()
 
-    for num_moves in range(1, 9):  # Up to 8 moves
-        for move_sequence in product(moves, repeat=num_moves):
-            # Create a temporary copy of the cube
-            temp_cube = {k: [row.copy() for row in v] for k, v in cube.items()}
+    start_time = time.time()
 
-            # Apply the moves to the temporary cube
+    # BFS loop
+    while queue:
+        current_cube, move_sequence, depth = queue.popleft()
+
+        # Check if white cross is solved
+        if is_white_cross_solved(current_cube):
+            # Apply the solution to the original cube
             for move in move_sequence:
-                move(temp_cube)
+                move(cube)
 
-            # Check if the white cross is solved
-            if is_white_cross_solved(temp_cube):
-                # Return the sequence of moves in readable format
-                [move(cube) for move in move_sequence]
-                return [move_names[move] for move in move_sequence]
+            end_time = time.time()
+            execution_time = end_time - start_time
+            print(f"Execution Time: {execution_time:.4f} seconds")
 
-    return None  # Return None if no solution found within 8 moves
+            return [move_names[move] for move in move_sequence]
+
+        # If depth exceeds 8, stop exploring further
+        if depth >= 8:
+            continue
+
+        # Generate new states for all possible moves
+        for move in moves:
+            # Create a deep copy of the cube
+            temp_cube = {k: [row.copy() for row in v] for k, v in current_cube.items()}
+            move(temp_cube)
+
+            # Serialize the state to a tuple for the visited check
+            state_tuple = tuple(tuple(row) for face in temp_cube.values() for row in face)
+            if state_tuple not in visited:
+                visited.add(state_tuple)
+                queue.append((temp_cube, move_sequence + [move], depth + 1))
+
+    return None  # Return None if no solution found under 8 moves
